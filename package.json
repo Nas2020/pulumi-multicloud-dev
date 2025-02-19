@@ -1,0 +1,14 @@
+{
+    "name": "pulumi-multicloud",
+    "main": "index.ts",
+    "devDependencies": {
+        "@types/node": "^18",
+        "typescript": "^5.0.0"
+    },
+    "dependencies": {
+        "@pulumi/aws": "^6.68.0",
+        "@pulumi/azure-native": "^2.88.0",
+        "@pulumi/pulumi": "^3.113.0",
+        "dotenv": "^16.4.7"
+    }
+}
