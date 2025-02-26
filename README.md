@@ -1,6 +1,9 @@
-![Digicred](/assets/digicred-logo.png)
+# ✨ Pulumi Multi-Cloud Infrastructure ✨
 
-# Pulumi Multi-Cloud Infrastructure
+<div align="center">
+  <img src="https://digicred.com/assets/digicred-logo.png" alt="DigiCred Logo" height="100" style="margin-right: 20px;" />
+  <img src="https://www.pulumi.com/assets/logo-pulumi.png" alt="Pulumi Logo" height="100" />
+</div>
 
 This project uses Pulumi with TypeScript to deploy Infrastructure as Code (IaC) for multi-cloud resources. Currently, it supports **AWS**, with plans to add **Azure** in the future. This README provides instructions to set up and run the project locally on macOS or Linux, deploy to AWS for development and production environments, and an overview of the architecture and file structure.
 
@@ -15,7 +18,7 @@ This project uses Pulumi with TypeScript to deploy Infrastructure as Code (IaC) 
 
 ---
 
-## Project Overview
+**[Scroll down to explore the full README](#project-overview)** or dive into the setup process below!
 
 This project leverages Pulumi and TypeScript to deploy a scalable AWS infrastructure within a multi-AZ Virtual Private Cloud (VPC), designed as the foundation for a future multi-cloud system (Azure support planned). It provisions networking, security, and EC2 instances to support a multi-tier application architecture, with Nginx acting as a reverse proxy for backend services.
 
@@ -58,44 +61,7 @@ The architecture follows a multi-tier design with public-facing and private serv
 
 ![AWS Architecture Conceptual](/assets/aws-architecture-conceptual.png)
 
-*Note: The architecture diagram is also available in the assets directory.*
 
-Alternatively, the architecture can be represented as:
-
-```
-┌─────────────────────────────────────────── Resource Group ───────────────────────────────────────────┐
-│                                                                                                       │
-│  ┌─────────────────────────────────────── Virtual Network ────────────────────────────────────────┐  │
-│  │                                                                                                │  │
-│  │  ┌─────────┐                   ┌────┐                                                          │  │
-│  │  │ Cloud   │                   │    │                                                          │  │
-│  │  │ Firewall│                   │ 🔒 │ Security Groups/ACLs                                     │  │
-│  │  │ Rules   │                   │    │                                                          │  │
-│  │  └─────────┘                   └────┘                                                          │  │
-│  │                                                                                                │  │
-│  │  ┌─────────┐          ┌─────────────────┐           ┌─────────────────┐      ┌─────────────┐  │  │
-│  │  │ Key     │          │      VM 1       │           │      VM 2       │      │    VM 3     │  │  │
-│  │  │ Mgmt    │          │  ┌──────────┐   │           │  ┌──────────┐   │      │ ┌─────────┐ │  │  │
-│  │  │ Service │          │  │  Docker  │   │           │  │  Docker  │   │      │ │ Docker  │ │  │  │
-│  │  └─────────┘          │  │  NGINX   │   │           │  │ DigiCred │   │      │ │Controller│ │  │  │
-│  │                       │  └──────────┘   │           │  │   CrMS   │   │      │ └─────────┘ │  │  │
-│  │                       │                 │           │  └──────────┘   │      │ ┌─────────┐ │  │  │
-│  │                       │  Public Subnet  │           │  │  Docker  │   │      │ │ Docker  │ │  │  │
-│  │                       └─────────────────┘           │  │PostgreSQL│   │      │ │  Redis  │ │  │  │
-│  │                               ▲                     │  └──────────┘   │      │ └─────────┘ │  │  │
-│  │                               │                     │                 │      │             │  │  │
-│  │                               │                     │  Private Subnet │      │Private Subnet│  │  │
-│  │                               │                     └─────────────────┘      └─────────────┘  │  │
-│  │                               │                                                               │  │
-│  └───────────────────────────────┼───────────────────────────────────────────────────────────────┘  │
-│                                  │                                                                   │
-└──────────────────────────────────┼───────────────────────────────────────────────────────────────────┘
-                                   │
-     ┌──────────────┐       ┌──────────────┐       ┌──────────────┐
-     │  Admin Web   │       │    Agent     │       │   SIS/CRM    │
-     │  Interface   │       │  Interface   │       │  Integration │
-     └──────────────┘       └──────────────┘       └──────────────┘
-```
 
 ### Network Architecture
 
