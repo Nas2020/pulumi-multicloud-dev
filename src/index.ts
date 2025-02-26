@@ -1,4 +1,3 @@
-// File: src/index.ts
 import * as pulumi from "@pulumi/pulumi";
 import { createBaseInfra, BaseInfraOutputs } from "./aws/base-infra";
 import { createSecuritySecrets, SecuritySecretsOutputs } from "./aws/security-secrets";
@@ -29,29 +28,3 @@ export const infrastructureOutputs = {
     nginxSecurityGroupId: securitySecretsOutputs.nginxSecurityGroupId,
     appSecurityGroupId: securitySecretsOutputs.appSecurityGroupId,
 };
-// import * as pulumi from "@pulumi/pulumi";
-// import { createBaseInfra, BaseInfraOutputs } from "./aws/base-infra";
-// import { createSecuritySecrets, SecuritySecretsOutputs } from "./aws/security-secrets";
-// import { createEc2Instances, Ec2InstancesOutputs } from "./aws/ec2-instances";
-
-// const config = new pulumi.Config();
-// const cloudProvider = config.require("cloudProvider");
-
-// let baseInfraOutputs: BaseInfraOutputs;
-// let securitySecretsOutputs: SecuritySecretsOutputs;
-// let ec2InstancesOutputs: Ec2InstancesOutputs;
-
-// if (cloudProvider === "aws") {
-//     baseInfraOutputs = createBaseInfra();
-//     securitySecretsOutputs = createSecuritySecrets(baseInfraOutputs);
-//     ec2InstancesOutputs = createEc2Instances(baseInfraOutputs, securitySecretsOutputs);
-// } else {
-//     throw new Error("Currently, only 'aws' is supported for this infrastructure.");
-// }
-
-// export const selectedCloudProvider = cloudProvider;
-// export const infrastructureOutputs = {
-//     ...baseInfraOutputs,
-//     ...securitySecretsOutputs,
-//     ...ec2InstancesOutputs,
-// };

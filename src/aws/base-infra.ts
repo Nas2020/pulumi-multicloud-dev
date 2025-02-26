@@ -1,4 +1,3 @@
-// File: src/aws/base-infra.ts
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
 import * as ip from "ip";
@@ -49,10 +48,10 @@ function validateCidrs(cidrs: string[]): void {
 
 export function createBaseInfra(): BaseInfraOutputs {
     const config = new pulumi.Config();
-    const azs = config.getObject<string[]>("availabilityZones") || ["us-east-1a", "us-east-1b"];
-    const vpcCidr = config.get("vpcCidr") || "10.0.0.0/16";
-    const publicSubnetCidrs = config.getObject<string[]>("publicSubnetCidrs") || ["10.0.1.0/24", "10.0.3.0/24"];
-    const privateSubnetCidrs = config.getObject<string[]>("privateSubnetCidrs") || ["10.0.2.0/24", "10.0.4.0/24"];
+    const azs = config.getObject<string[]>("awsAvailabilityZones") || ["us-east-1a", "us-east-1b"];
+    const vpcCidr = config.get("awsVpcCidr") || "10.0.0.0/16";
+    const publicSubnetCidrs = config.getObject<string[]>("awsPublicSubnetCidrs") || ["10.0.1.0/24", "10.0.3.0/24"];
+    const privateSubnetCidrs = config.getObject<string[]>("awsPrivateSubnetCidrs") || ["10.0.2.0/24", "10.0.4.0/24"];
 
     // Validate CIDRs: VPC first, then subnets
     validateCidrs([vpcCidr, ...publicSubnetCidrs, ...privateSubnetCidrs]);
@@ -144,68 +143,6 @@ export function createBaseInfra(): BaseInfraOutputs {
         publicRouteTableId: publicRouteTable.id,
         privateRouteTableIds: pulumi.output(privateRouteTables.map(rt => rt.id)),
         natGatewayIds: pulumi.output(natGateways.map(n => n.id)),
-        natGateways, // Return the NAT Gateway objects
+        natGateways,
     };
 }
-
-// import * as aws from "@pulumi/aws";
-// import * as pulumi from "@pulumi/pulumi";
-
-// export interface BaseInfraOutputs {
-//     vpcId: pulumi.Output<string>;
-//     publicSubnetId: pulumi.Output<string>;
-//     privateSubnetId: pulumi.Output<string>;
-//     igwId: pulumi.Output<string>;
-//     publicRouteTableId: pulumi.Output<string>;
-// }
-
-// export function createBaseInfra(): BaseInfraOutputs {
-//     const config = new pulumi.Config();
-//     const az = config.get("availabilityZone") || "us-east-1a";
-
-//     const vpc = new aws.ec2.Vpc("main-vpc", {
-//         cidrBlock: "10.0.0.0/16",
-//         enableDnsHostnames: true,
-//         enableDnsSupport: true,
-//         tags: { Name: "main-vpc" },
-//     });
-
-//     const publicSubnet = new aws.ec2.Subnet("public-subnet", {
-//         vpcId: vpc.id,
-//         cidrBlock: "10.0.1.0/24",
-//         availabilityZone: az,
-//         mapPublicIpOnLaunch: true,
-//         tags: { Name: "public-subnet" },
-//     });
-
-//     const privateSubnet = new aws.ec2.Subnet("private-subnet", {
-//         vpcId: vpc.id,
-//         cidrBlock: "10.0.2.0/24",
-//         availabilityZone: az,
-//         tags: { Name: "private-subnet" },
-//     });
-
-//     const igw = new aws.ec2.InternetGateway("main-igw", {
-//         vpcId: vpc.id,
-//         tags: { Name: "main-igw" },
-//     });
-
-//     const publicRouteTable = new aws.ec2.RouteTable("public-route-table", {
-//         vpcId: vpc.id,
-//         routes: [{ cidrBlock: "0.0.0.0/0", gatewayId: igw.id }],
-//         tags: { Name: "public-route-table" },
-//     });
-
-//     const publicRouteTableAssociation = new aws.ec2.RouteTableAssociation("public-rt-assoc", {
-//         subnetId: publicSubnet.id,
-//         routeTableId: publicRouteTable.id,
-//     });
-
-//     return {
-//         vpcId: vpc.id,
-//         publicSubnetId: publicSubnet.id,
-//         privateSubnetId: privateSubnet.id,
-//         igwId: igw.id,
-//         publicRouteTableId: publicRouteTable.id,
-//     };
-// }
