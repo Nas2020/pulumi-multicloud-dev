@@ -1,8 +1,9 @@
-# ✨ Pulumi Multi-Cloud Infrastructure ✨
-
+<div align="center">
+  <h1>✨ Pulumi Multi-Cloud Infrastructure ✨</h1>
+</div>
 <div align="center">
   <a href="https://digicred.com" target="_blank">
-    <img src="/assets/digicred logo.png" alt="DigiCred Logo" height="100" style="margin-right: 20px;" />
+    <img src="/assets/digicred-logo.png" alt="DigiCred Logo" height="100" style="margin-right: 20px;" />
   </a>
   <a href="https://pulumi.com" target="_blank">
     <img src="/assets/logo-pulumi.png" alt="Pulumi Logo" height="100" />
@@ -24,8 +25,6 @@
     <img alt="Azure" src="https://img.shields.io/badge/Azure-Planned-lightgrey?logo=microsoft-azure">
   </p>
 </div>
-<hr>
-
 <hr>
 
 This project uses **Pulumi** with **TypeScript** to deploy Infrastructure as Code (IaC) for multi-cloud resources. Currently, it supports **AWS**, with plans to add **Azure** in the future. This README provides instructions to set up and run the project locally on macOS or Linux, deploy to AWS for development and production environments, and an overview of the architecture and file structure.
@@ -448,19 +447,11 @@ Ensure your domain is correctly pointing to the Nginx public IP if you're using 
     <p>Add deployment options for Azure resources</p>
   </div>
   <div style="flex: 1; min-width: 200px; border: 1px solid #ddd; border-radius: 8px; padding: 16px; background-color: #f9f9f9;">
-    <h3>🐳 Container Support</h3>
-    <p>Enhance Docker support with container orchestration</p>
-  </div>
-  <div style="flex: 1; min-width: 200px; border: 1px solid #ddd; border-radius: 8px; padding: 16px; background-color: #f9f9f9;">
-    <h3>🔄 CI/CD Integration</h3>
-    <p>Automated deployment pipelines</p>
-  </div>
-  <div style="flex: 1; min-width: 200px; border: 1px solid #ddd; border-radius: 8px; padding: 16px; background-color: #f9f9f9;">
     <h3>📊 Monitoring</h3>
     <p>Add integrated monitoring and alerting</p>
   </div>
   <div style="flex: 1; min-width: 200px; border: 1px solid #ddd; border-radius: 8px; padding: 16px; background-color: #f9f9f9;">
-    <h3>🔒 Backup & DR</h3>
+    <h3>🔒 Backup</h3>
     <p>Implement automated backup solutions</p>
   </div>
 </div>
