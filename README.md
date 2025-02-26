@@ -1,11 +1,11 @@
 <div align="center">
-  <h1>✨ Pulumi Multi-Cloud Infrastructure ✨</h1>
+  <h1>✨ Pulumi Multi-Cloud Infrastructure By DigiCred✨</h1>
 </div>
 <div align="center">
-  <a href="https://digicred.com" target="_blank">
+  <a href="https://digicred.com" target="_blank" rel="noopener noreferrer">
     <img src="/assets/digicred-logo.png" alt="DigiCred Logo" height="100" style="margin-right: 20px;" />
   </a>
-  <a href="https://pulumi.com" target="_blank">
+  <a href="https://pulumi.com" target="_blank" rel="noopener noreferrer">
     <img src="/assets/logo-pulumi.png" alt="Pulumi Logo" height="100" />
   </a>
   <br><br>
