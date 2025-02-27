@@ -1,4 +1,3 @@
-// File: src/aws/security-secrets.ts
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
 import { BaseInfraOutputs } from "./base-infra";
@@ -12,7 +11,7 @@ export interface SecuritySecretsOutputs {
 
 export function createSecuritySecrets(baseInfra: BaseInfraOutputs): SecuritySecretsOutputs {
     const config = new pulumi.Config();
-    const sshCidrBlocks = config.getObject<string[]>("sshCidrBlocks") || ["0.0.0.0/0"];
+    const sshCidrBlocks = config.getObject<string[]>("awsSshCidrBlocks") || ["0.0.0.0/0"];
     
     // Create VPC security group for nginx
     const nginxSecurityGroup = new aws.ec2.SecurityGroup("nginx-sg", {

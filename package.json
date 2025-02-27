@@ -1,6 +1,9 @@
 {
     "name": "pulumi-multicloud",
     "main": "src/index.ts",
+    "version": "1.0.0",
+    "description": "Pulumi to deploy Infrastructure as Code (IaC) for multi-cloud resources",
+    "author": "Nas Til",
     "devDependencies": {
         "@types/ip": "^1.1.3",
         "@types/node": "^18",

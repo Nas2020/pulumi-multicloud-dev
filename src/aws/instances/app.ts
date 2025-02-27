@@ -123,5 +123,5 @@ echo "${config.name} setup complete at $(date)"`,
         },
     }, opts);
 
-    return instance; // Return the full instance object
+    return instance;
 }
