@@ -266,8 +266,35 @@ Review default configuration in Pulumi.dev.yaml. To override any settings:
 
 ```bash
 pulumi config set cloudProvider aws
-pulumi config set awsAvailabilityZones --json '["us-east-1a", "us-east-1b"]'
+...
 ```
+or 
+
+```bash
+cat > Pulumi.dev.yaml << 'EOF'
+config:
+  pulumi-multicloud:cloudProvider: aws
+  pulumi-multicloud:awsAvailabilityZones:
+    - us-east-1a
+    - us-east-1b
+  pulumi-multicloud:awsVpcCidr: "10.0.0.0/16"
+  pulumi-multicloud:awsSshCidrBlocks:
+    - "0.0.0.0/0"
+  pulumi-multicloud:awsPublicSubnetCidrs:
+    - "10.0.1.0/24"
+    - "10.0.3.0/24"
+  pulumi-multicloud:awsPrivateSubnetCidrs:
+    - "10.0.2.0/24"
+    - "10.0.4.0/24"
+  pulumi-multicloud:awsNginxInstanceType: "t2.micro"
+  pulumi-multicloud:awsTractionInstanceType: "t2.large"
+  pulumi-multicloud:AWSControllerInstanceType: "t2.medium" 
+  pulumi-multicloud:awsLetsEncryptEmail: "nas@digicred.co"
+  pulumi-multicloud:awsNginxServerDNS: "testcrms.digicred.services"
+EOF
+```
+
+Edit Pulumi.dev.yaml with dev-specific settings, then deploy:
 
 > **Note:**
 > - macOS/Linux: Run these in Terminal.
@@ -304,7 +331,30 @@ For a production environment:
 
 ```bash
 pulumi stack init prod
-cp Pulumi.dev.yaml Pulumi.prod.yaml
+```
+
+```bash
+cat > Pulumi.prod.yaml << 'EOF'
+config:
+  pulumi-multicloud:cloudProvider: aws
+  pulumi-multicloud:awsAvailabilityZones:
+    - us-east-1a
+    - us-east-1b
+  pulumi-multicloud:awsVpcCidr: "10.0.0.0/16"
+  pulumi-multicloud:awsSshCidrBlocks:
+    - "0.0.0.0/0"
+  pulumi-multicloud:awsPublicSubnetCidrs:
+    - "10.0.1.0/24"
+    - "10.0.3.0/24"
+  pulumi-multicloud:awsPrivateSubnetCidrs:
+    - "10.0.2.0/24"
+    - "10.0.4.0/24"
+  pulumi-multicloud:awsNginxInstanceType: "t2.micro"
+  pulumi-multicloud:awsTractionInstanceType: "t2.large"
+  pulumi-multicloud:AWSControllerInstanceType: "t2.medium" 
+  pulumi-multicloud:awsLetsEncryptEmail: "nas@digicred.co"
+  pulumi-multicloud:awsNginxServerDNS: "testcrms.digicred.services"
+EOF
 ```
 
 Edit Pulumi.prod.yaml with production-specific settings, then deploy:
