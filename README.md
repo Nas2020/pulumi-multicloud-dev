@@ -364,6 +364,16 @@ pulumi stack select prod
 pulumi up
 ```
 
+Copy `nginxPublicIp` value from Outputs
+
+```bash
+Create an A record in your DNS provider's dashboard. Point your domain (e.g., example.com) to Nginx public IP address from the outputs.
+```
+
+```bash
+Wait for DNS propagation (typically 15-30 minutes). DNS propagation can take anywhere from a few minutes to 24+ hours depending on TTL settings and DNS providers, but 15 minutes is often sufficient for most cases.
+```
+
 ### 5. Cleanup
 To destroy a stack and remove all resources:
 
@@ -405,11 +415,11 @@ export AWS_SECRET_ACCESS_KEY=&lt;your-secret-key&gt;</pre>
 <b>Problem</b>: <code>InvalidRequestException: You can't create this secret because a secret with this name is already scheduled for deletion.</code>  
 <b>Solution</b>:
 <ul>
-  <li>Use a different name for the secret (recommended):
-    <pre># Update the name in your Pulumi code</pre>
+ <li>Force delete the existing secret (if you want to reuse the name):
+    <pre>aws secretsmanager delete-secret --secret-id app-secrets-v2 --region us-east-1 --force-delete-without-recovery --output json</pre>
   </li>
-  <li>Force delete the existing secret (if you want to reuse the name):
-    <pre>aws secretsmanager delete-secret --secret-id app-secrets-v2 --region us-east-1 --force-delete-without-recovery</pre>
+  <li>Verify the secret is deleted:
+    <pre>aws secretsmanager describe-secret --secret-id app-secrets-v2 --region us-east-1 --output json</pre>
   </li>
 </ul>
 </details>

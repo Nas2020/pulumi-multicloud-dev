@@ -3,27 +3,27 @@ import * as pulumi from "@pulumi/pulumi";
 import { NginxConfig } from "./types";
 
 export function createNginxInstance(config: NginxConfig, opts?: pulumi.ComponentResourceOptions): aws.ec2.Instance {
-   const instanceConfig = new pulumi.Config();
+    const instanceConfig = new pulumi.Config();
 
-   // Get configuration values
-   const rawServerName = instanceConfig.get("awsNginxServerDNS") || "";
-   const rawLetsEncryptEmail = instanceConfig.get("awsLetsEncryptEmail") || "";
-   
-   // Validate domain name - basic validation for a valid hostname format
-   const domainRegex = /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/;
-   const serverName = domainRegex.test(rawServerName) ? rawServerName : "";
-   
-   // Validate email
-   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-   const letsEncryptEmail = emailRegex.test(rawLetsEncryptEmail) ? rawLetsEncryptEmail : "";
-   
-   // Log validation results for debugging
-   if (rawServerName && !serverName) {
-       console.log(`Warning: Invalid domain name format: ${rawServerName}`);
-   }
-   if (rawLetsEncryptEmail && !letsEncryptEmail) {
-       console.log(`Warning: Invalid email format: ${rawLetsEncryptEmail}`);
-   }
+    // Get configuration values
+    const rawServerName = instanceConfig.get("awsNginxServerDNS") || "";
+    const rawLetsEncryptEmail = instanceConfig.get("awsLetsEncryptEmail") || "";
+    
+    // Validate domain name - basic validation for a valid hostname format
+    const domainRegex = /^(([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.)*([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9\-]*[A-Za-z0-9])$/;
+    const serverName = domainRegex.test(rawServerName) ? rawServerName : "";
+    
+    // Validate email
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const letsEncryptEmail = emailRegex.test(rawLetsEncryptEmail) ? rawLetsEncryptEmail : "";
+    
+    // Log validation results for debugging
+    if (rawServerName && !serverName) {
+        console.log(`Warning: Invalid domain name format: ${rawServerName}`);
+    }
+    if (rawLetsEncryptEmail && !letsEncryptEmail) {
+        console.log(`Warning: Invalid email format: ${rawLetsEncryptEmail}`);
+    }
     const timestamp = new Date().toISOString();
 
     // Define the init script with proper error handling and idempotency
@@ -33,7 +33,6 @@ exec > >(tee /var/log/nginx-userdata.log) 2>&1
 
 echo "===== Starting Nginx setup ====="
 echo "Server Name: ${serverName}"
-echo "Let's Encrypt Email: ${letsEncryptEmail}"
 echo "Let's Encrypt Email: ${letsEncryptEmail}"
 echo "Traction IP: ${config.tractionIp}"
 echo "Controller IP: ${config.controllerIp}"
@@ -174,7 +173,6 @@ server {
     proxy_buffers 8 16k;
     proxy_buffer_size 16k;
     proxy_busy_buffers_size 32k;
-
 EOL
 
 # Add Let's Encrypt cert validation path if using SSL
@@ -185,7 +183,6 @@ if [ "$USE_SSL" = true ]; then
         root /var/www/html;
         allow all;
     }
-
 EOL
 fi
 
@@ -205,10 +202,10 @@ cat >> /etc/nginx/sites-available/default <<EOL
         error_log /var/log/nginx/traction_error.log debug;
         proxy_pass http://${config.tractionIp}:80;
         proxy_http_version 1.1;
-        proxy_set_header Host \\$host;
-        proxy_set_header X-Real-IP \\$remote_addr;
-        proxy_set_header X-Forwarded-For \\$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \\$scheme;
+        proxy_set_header Host \\\$host;
+        proxy_set_header X-Real-IP \\\$remote_addr;
+        proxy_set_header X-Forwarded-For \\\$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \\\$scheme;
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
@@ -216,8 +213,6 @@ cat >> /etc/nginx/sites-available/default <<EOL
         proxy_next_upstream_tries 3;
         proxy_intercept_errors on;
         proxy_buffering on;
-        add_header X-Debug-Backend-Host \\$upstream_addr always;
-        add_header X-Debug-Request-Uri \\$request_uri always;
     }
 
     location /controller/ {
@@ -226,10 +221,10 @@ cat >> /etc/nginx/sites-available/default <<EOL
         error_log /var/log/nginx/controller_error.log debug;
         proxy_pass http://${config.controllerIp}:80;
         proxy_http_version 1.1;
-        proxy_set_header Host \\$host;
-        proxy_set_header X-Real-IP \\$remote_addr;
-        proxy_set_header X-Forwarded-For \\$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \\$scheme;
+        proxy_set_header Host \\\$host;
+        proxy_set_header X-Real-IP \\\$remote_addr;
+        proxy_set_header X-Forwarded-For \\\$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \\\$scheme;
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
@@ -237,8 +232,6 @@ cat >> /etc/nginx/sites-available/default <<EOL
         proxy_next_upstream_tries 3;
         proxy_intercept_errors on;
         proxy_buffering on;
-        add_header X-Debug-Backend-Host \\$upstream_addr always;
-        add_header X-Debug-Request-Uri \\$request_uri always;
     }
 
     location = /traction {
@@ -315,25 +308,33 @@ if [ "$USE_SSL" = true ]; then
     
     # Initial DNS check
     dns_check_success=false
-    
+
     # First DNS check attempt
+    echo "Starting initial DNS check for domain ${serverName} to IP $PUBLIC_IP at $(date)"
     if check_dns "${serverName}" "$PUBLIC_IP"; then
         dns_check_success=true
+        echo "Initial DNS check succeeded at $(date)"
     else
-        # Wait for DNS propagation with retries
-        echo "Initial DNS check failed. Will retry periodically..."
+        echo "Initial DNS check failed at $(date). Domain ${serverName} does not resolve to $PUBLIC_IP"
+        echo "Will retry periodically every 5 minutes for up to 6 hours (72 attempts)"
         
-        # We'll try every 10 minutes for up to 12 hours (72 attempts)
         for retry in {1..72}; do
-            echo "DNS retry $retry of 72 (waiting 10 minutes between attempts)"
-            sleep 600  # 10 minutes
+            echo "Starting DNS retry attempt $retry of 72 at $(date). Waiting 5 minutes before checking."
+            sleep 300  # 5 minutes
+            echo "Performing DNS check at $(date)"
             
             if check_dns "${serverName}" "$PUBLIC_IP"; then
                 dns_check_success=true
-                echo "DNS check succeeded after $retry retries!"
+                echo "DNS check succeeded at $(date) after $retry retries"
                 break
+            else
+                echo "DNS check failed at $(date): domain ${serverName} does not resolve to $PUBLIC_IP"
             fi
         done
+        
+        if [ "$dns_check_success" = false ]; then
+            echo "All 72 DNS retry attempts failed. Domain ${serverName} does not resolve to $PUBLIC_IP at $(date)"
+        fi
     fi
 
     # Request Let's Encrypt certificate if DNS is configured correctly
@@ -352,20 +353,20 @@ if [ "$USE_SSL" = true ]; then
             # Add a slight delay to ensure Nginx is fully started
             sleep 5
             
-            # Obtain Let's Encrypt SSL certificate with certbot nginx plugin
-            if certbot --nginx -d ${serverName} --non-interactive --agree-tos -m ${letsEncryptEmail} --redirect; then
-                echo "Certificate successfully obtained"
-                touch "$CERT_REQUEST_FLAG"
-                
-                # Update Nginx SSL configuration with stronger settings
-                cat > /etc/letsencrypt/renewal-hooks/post/update-ssl-params.sh <<EOL2
+            # Attempt certificate request with retries
+            for attempt in {1..3}; do
+                echo "Attempt $attempt of 3 to obtain certificate at $(date)"
+                if certbot --nginx -d ${serverName} --non-interactive --agree-tos -m ${letsEncryptEmail} --redirect; then
+                    echo "Certificate successfully obtained"
+                    touch "$CERT_REQUEST_FLAG"
+                    
+                    # Update Nginx SSL configuration with stronger settings
+                    cat > /etc/letsencrypt/renewal-hooks/post/update-ssl-params.sh <<EOL2
 #!/bin/bash
 # Add stronger SSL parameters after certificate issuance/renewal
-
-# Add SSL parameters to nginx config if they don't exist
 if ! grep -q "ssl_protocols TLSv1.2 TLSv1.3" /etc/nginx/sites-available/default; then
     # Create a temporary file
-    TEMP_FILE=\$(mktemp)
+    TEMP_FILE=\\\$(mktemp)
     
     # Find the SSL server block and add our parameters
     awk '
@@ -379,7 +380,7 @@ if ! grep -q "ssl_protocols TLSv1.2 TLSv1.3" /etc/nginx/sites-available/default;
             print "    # Strong SSL Configuration"
             print "    ssl_protocols TLSv1.2 TLSv1.3;"
             print "    ssl_prefer_server_ciphers on;"
-            print "    ssl_ciphers \"ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384\";"
+            print "    ssl_ciphers \\"ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384\\";"
             print "    ssl_session_timeout 1d;"
             print "    ssl_session_cache shared:SSL:10m;"
             print "    ssl_session_tickets off;"
@@ -387,31 +388,39 @@ if ! grep -q "ssl_protocols TLSv1.2 TLSv1.3" /etc/nginx/sites-available/default;
             next
         }
         { print }
-    ' /etc/nginx/sites-available/default > \$TEMP_FILE
+    ' /etc/nginx/sites-available/default > \\\$TEMP_FILE
     
-    # If the temp file has content (check wasn't empty), replace the config
-    if [ -s \$TEMP_FILE ]; then
-        cat \$TEMP_FILE > /etc/nginx/sites-available/default
+    # If the temp file has content, replace the config
+    if [ -s \\\$TEMP_FILE ]; then
+        cat \\\$TEMP_FILE > /etc/nginx/sites-available/default
         nginx -t && systemctl reload nginx
     fi
     
     # Clean up
-    rm \$TEMP_FILE
+    rm \\\$TEMP_FILE
 fi
 EOL2
-                chmod +x /etc/letsencrypt/renewal-hooks/post/update-ssl-params.sh
-                
-                # Run it immediately
-                /etc/letsencrypt/renewal-hooks/post/update-ssl-params.sh
-            else
-                echo "WARNING: Certbot initial certificate request failed"
-                echo "You can manually run the certificate request with:"
-                echo "certbot --nginx -d ${serverName} --agree-tos -m ${letsEncryptEmail} --redirect"
-                
-                # Create a cron job to attempt certificate requests periodically
+                    chmod +x /etc/letsencrypt/renewal-hooks/post/update-ssl-params.sh
+                    /etc/letsencrypt/renewal-hooks/post/update-ssl-params.sh
+                    break
+                else
+                    echo "Attempt $attempt failed at $(date)"
+                    if [ $attempt -lt 3 ]; then
+                        echo "Waiting 10 minutes before retrying to respect rate limits"
+                        sleep 600
+                    fi
+                fi
+            done
+            touch "$CERT_REQUEST_FLAG"  # Mark attempt regardless of success
+            
+            if [ ! -f "/etc/letsencrypt/live/${serverName}" ]; then
+                echo "ERROR: All 3 attempts to obtain Let's Encrypt certificate failed at $(date)"
+                echo "Domain: ${serverName}, Public IP: $PUBLIC_IP"
+                echo "Next retry via cron in 3 hours. Check /var/log/certbot-retry.log for updates."
+                echo "Manual fix: certbot --nginx -d ${serverName} --agree-tos -m ${letsEncryptEmail} --redirect"
                 cat > /etc/cron.d/certbot-retry <<EOL3
-# Attempt to request SSL certificate every 6 hours if it hasn't been obtained yet
-0 */6 * * * root [ ! -d "/etc/letsencrypt/live/${serverName}" ] && [ -f "/var/lib/nginx-ssl-setup.lock" ] && certbot --nginx -d ${serverName} --non-interactive --agree-tos -m ${letsEncryptEmail} --redirect >> /var/log/certbot-retry.log 2>&1
+# Attempt to request SSL certificate every 3 hours if not obtained
+0 */3 * * * root [ ! -d "/etc/letsencrypt/live/${serverName}" ] && [ -f "/var/lib/nginx-ssl-setup.lock" ] && certbot --nginx -d ${serverName} --non-interactive --agree-tos -m ${letsEncryptEmail} --redirect >> /var/log/certbot-retry.log 2>&1
 EOL3
                 chmod 644 /etc/cron.d/certbot-retry
             fi
@@ -421,20 +430,17 @@ EOL3
         echo "WARNING: ${serverName} doesn't resolve to server's IP $PUBLIC_IP"
         echo "SSL certificate will not be obtained until DNS is properly configured."
         
-        # Create a cron job to check DNS and attempt certificate periodically
         cat > /etc/cron.d/certbot-dns-check <<EOL4
-# Check DNS resolution and attempt to get certificate every 6 hours
-0 */6 * * * root [ ! -d "/etc/letsencrypt/live/${serverName}" ] && [ -f "/var/lib/nginx-ssl-setup.lock" ] && if [ "\$(dig +short ${serverName})" = "$PUBLIC_IP" ]; then certbot --nginx -d ${serverName} --non-interactive --agree-tos -m ${letsEncryptEmail} --redirect; fi >> /var/log/certbot-dns-check.log 2>&1
+# Check DNS and attempt certificate every 3 hours
+0 */3 * * * root [ ! -d "/etc/letsencrypt/live/${serverName}" ] && [ -f "/var/lib/nginx-ssl-setup.lock" ] && if [ "\\\$(dig +short ${serverName})" = "$PUBLIC_IP" ]; then certbot --nginx -d ${serverName} --non-interactive --agree-tos -m ${letsEncryptEmail} --redirect; fi >> /var/log/certbot-dns-check.log 2>&1
 EOL4
         chmod 644 /etc/cron.d/certbot-dns-check
         
-        echo "Created automated job to check DNS and request certificate every 6 hours"
-        echo "Manual command to request certificate after DNS propagation:"
-        echo "certbot --nginx -d ${serverName} --agree-tos -m ${letsEncryptEmail} --redirect"
+        echo "Created automated job to check DNS and request certificate every 3 hours"
+        echo "Manual command: certbot --nginx -d ${serverName} --agree-tos -m ${letsEncryptEmail} --redirect"
     fi
 
-    # Certbot from snap package automatically configures cron renewal, but let's make
-    # sure the renewal hooks are properly set up
+    # Set up certificate auto-renewal hooks
     echo "===== Setting up certificate auto-renewal hooks ====="
     mkdir -p /etc/letsencrypt/renewal-hooks/post/
     cat > /etc/letsencrypt/renewal-hooks/post/nginx-reload.sh <<EOL
