@@ -1,46 +1,14 @@
-// import * as pulumi from "@pulumi/pulumi";
-// import { createBaseInfra, BaseInfraOutputs } from "./aws/base-infra";
-// import { createSecuritySecrets, SecuritySecretsOutputs } from "./aws/security-secrets";
-// import { createEc2Instances, Ec2InstancesOutputs } from "./aws/ec2-instances";
-
-// const config = new pulumi.Config();
-// const cloudProvider = config.require("cloudProvider");
-
-// let baseInfraOutputs: BaseInfraOutputs;
-// let securitySecretsOutputs: SecuritySecretsOutputs;
-// let ec2InstancesOutputs: Ec2InstancesOutputs;
-
-// if (cloudProvider === "aws") {
-//     baseInfraOutputs = createBaseInfra();
-//     securitySecretsOutputs = createSecuritySecrets(baseInfraOutputs);
-//     ec2InstancesOutputs = createEc2Instances(baseInfraOutputs, securitySecretsOutputs);
-// } else {
-//     throw new Error(`Unsupported cloud provider: "${cloudProvider}". Only "aws" is currently supported. Please check your Pulumi.dev.yaml config under "pulumi-multicloud:cloudProvider".`);
-// }
-
-// export const selectedCloudProvider = cloudProvider;
-// export const infrastructureOutputs = {
-//     ...baseInfraOutputs,
-//     ...securitySecretsOutputs,
-//     ...ec2InstancesOutputs,
-//     privateRouteTableIds: baseInfraOutputs.privateRouteTableIds,
-//     natGatewayIds: baseInfraOutputs.natGatewayIds,
-//     nginxSecurityGroupId: securitySecretsOutputs.nginxSecurityGroupId,
-//     appSecurityGroupId: securitySecretsOutputs.appSecurityGroupId,
-// };
-
-
 import * as pulumi from "@pulumi/pulumi";
 
 // AWS imports
-import { createBaseInfra as createAwsBaseInfra, BaseInfraOutputs as AwsBaseInfraOutputs } from "./aws/base-infra";
-import { createSecuritySecrets as createAwsSecuritySecrets, SecuritySecretsOutputs as AwsSecuritySecretsOutputs } from "./aws/security-secrets";
-import { createEc2Instances, Ec2InstancesOutputs } from "./aws/ec2-instances";
+import { createBaseInfra as createAwsBaseInfra } from "./aws/base-infra";
+import { createSecuritySecrets as createAwsSecuritySecrets } from "./aws/security-secrets";
+import { createEc2Instances } from "./aws/ec2-instances";
 
 // Azure imports
 import { createBaseInfra as createAzureBaseInfra, BaseInfraOutputs as AzureBaseInfraOutputs } from "./azure/base-infra";
-// import { createSecuritySecrets as createAzureSecuritySecrets, SecuritySecretsOutputs as AzureSecuritySecretsOutputs } from "./azure/security-secrets";
-// import { createVmInstances, VmInstancesOutputs } from "./azure/vm-instances";
+import { createSecuritySecrets as createAzureSecuritySecrets, SecuritySecretsOutputs as AzureSecuritySecretsOutputs } from "./azure/security-secrets";
+import { createVmInstances } from "./azure/vm-instances";
 
 const config = new pulumi.Config();
 const cloudProvider = config.require("cloudProvider");
@@ -60,21 +28,32 @@ if (cloudProvider === "aws") {
         natGatewayIds: baseInfraOutputs.natGatewayIds,
         nginxSecurityGroupId: securitySecretsOutputs.nginxSecurityGroupId,
         appSecurityGroupId: securitySecretsOutputs.appSecurityGroupId,
-        cloudProvider: "aws",
+        cloudProvider
     };
 } else if (cloudProvider === "azure") {
     const azureSubscriptionId = config.get("azureSubscriptionId") || "";
     const baseInfraOutputs = createAzureBaseInfra();
+    const securitySecretsOutputs = createAzureSecuritySecrets(baseInfraOutputs);
+    const vmInstancesOutputs = createVmInstances(baseInfraOutputs, securitySecretsOutputs);
 
     infrastructureOutputs = {
         ...baseInfraOutputs,
+        ...securitySecretsOutputs,
         resourceGroupName: baseInfraOutputs.resourceGroupName,
         vnetId: baseInfraOutputs.vnetId,
         publicSubnetIds: baseInfraOutputs.publicSubnetIds,
         privateSubnetIds: baseInfraOutputs.privateSubnetIds,
         natGatewayIds: baseInfraOutputs.natGatewayIds,
-        azureSubscriptionId: azureSubscriptionId,
-        cloudProvider: "azure",
+        webNsgId: securitySecretsOutputs.webNsgId,
+        appNsgId: securitySecretsOutputs.appNsgId,
+        keyVaultUri: securitySecretsOutputs.keyVaultUri,
+        managedIdentityId: securitySecretsOutputs.managedIdentityId,
+        azureSubscriptionId,
+        webPublicIp: vmInstancesOutputs.webPublicIp,
+        tractionPrivateIp: vmInstancesOutputs.tractionPrivateIp,
+        controllerPrivateIp: vmInstancesOutputs.controllerPrivateIp,
+        publicIpAddress: vmInstancesOutputs.publicIpAddress,
+        cloudProvider
     };
 } else {
     throw new Error(`Unsupported cloud provider: "${cloudProvider}".`);

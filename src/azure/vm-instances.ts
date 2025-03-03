@@ -1,195 +1,79 @@
-// import * as pulumi from "@pulumi/pulumi";
-// import * as azure from "@pulumi/azure-native";
-// import * as compute from "@pulumi/azure-native/compute";
-// import * as network from "@pulumi/azure-native/network";
-// import { BaseInfraOutputs } from "./base-infra";
-// import { SecuritySecretsOutputs } from "./security-secrets";
+import * as pulumi from "@pulumi/pulumi";
+import * as network from "@pulumi/azure-native/network";
+import { BaseInfraOutputs } from "./base-infra";
+import { SecuritySecretsOutputs } from "./security-secrets";
+import { createAppInstance } from "./instances/app";
+import { createWebInstance } from "./instances/web";
 
-// export interface VmInstancesOutputs {
-//     webVmIds: pulumi.Output<string[]>;
-//     appVmIds: pulumi.Output<string[]>;
-//     webVmPublicIps: pulumi.Output<string[]>;
-// }
+export interface VmInstancesOutputs {
+    webPublicIp: pulumi.Output<string | undefined>;
+    tractionPrivateIp: pulumi.Output<string | undefined>;
+    controllerPrivateIp: pulumi.Output<string | undefined>;
+    publicIpAddress: pulumi.Output<string | undefined>;
+}
 
-// export function createVmInstances(
-//     baseInfra: BaseInfraOutputs,
-//     securitySecrets: SecuritySecretsOutputs
-// ): VmInstancesOutputs {
-//     const config = new pulumi.Config();
-//     const vmSize = config.get("azureVmSize") || "Standard_B2s";
-//     const adminUsername = config.get("azureAdminUsername") || "azureuser";
-//     const sshPublicKey = config.require("azureSshPublicKey"); // You must provide an SSH public key
 
-//     // Create public IPs for web VMs
-//     const webPublicIps = baseInfra.publicSubnetIds.apply(subnetIds => {
-//         return subnetIds.map((subnetId, i) => {
-//             return new network.PublicIPAddress(`web-vm-pip-${i}`, {
-//                 resourceGroupName: baseInfra.resourceGroupName,
-//                 publicIPAllocationMethod: network.IPAllocationMethod.Dynamic,
-//                 publicIPAddressName: `web-vm-pip-${i}`,
-//             });
-//         });
-//     });
+export function createVmInstances(
+    baseInfra: BaseInfraOutputs,
+    securitySecrets: SecuritySecretsOutputs
+): VmInstancesOutputs {
+    const config = new pulumi.Config();
+    
+    // Create a public IP for the web VM (equivalent to Elastic IP in AWS)
+    const publicIp = new network.PublicIPAddress("web-public-ip", {
+        resourceGroupName: baseInfra.resourceGroupName,
+        publicIPAllocationMethod: network.IPAllocationMethod.Static,
+        // publicIPAddressName removed as it may cause an error in some Azure regions
+        tags: { Name: "web-public-ip" },
+    });
 
-//     // Create network interfaces for web VMs
-//     const webNics = baseInfra.publicSubnetIds.apply(subnetIds => {
-//         return subnetIds.map((subnetId, i) => {
-//             return new network.NetworkInterface(`web-vm-nic-${i}`, {
-//                 resourceGroupName: baseInfra.resourceGroupName,
-//                 networkInterfaceName: `web-vm-nic-${i}`,
-//                 ipConfigurations: [{
-//                     name: "ipconfig",
-//                     subnet: {
-//                         id: subnetId,
-//                     },
-//                     publicIPAddress: {
-//                         id: webPublicIps[i].id,
-//                     },
-//                 }],
-//                 networkSecurityGroup: {
-//                     id: securitySecrets.webNsgId,
-//                 },
-//             });
-//         });
-//     });
+    // Helper function to safely get an element from natGatewayIds array
+    const getNatGatewayId = (index: number): pulumi.Output<string> => {
+        return baseInfra.natGatewayIds.apply(ids => {
+            if (ids && ids.length > index) {
+                return ids[index];
+            }
+            return ids[0];
+        });
+    };
 
-//     // Create web VMs (nginx equivalent)
-//     const webVms = webNics.apply(nics => {
-//         return nics.map((nic, i) => {
-//             return new compute.VirtualMachine(`web-vm-${i}`, {
-//                 resourceGroupName: baseInfra.resourceGroupName,
-//                 vmName: `web-vm-${i}`,
-//                 location: nic.location,
-//                 hardwareProfile: {
-//                     vmSize: vmSize,
-//                 },
-//                 osProfile: {
-//                     computerName: `web-vm-${i}`,
-//                     adminUsername: adminUsername,
-//                     linuxConfiguration: {
-//                         disablePasswordAuthentication: true,
-//                         ssh: {
-//                             publicKeys: [{
-//                                 path: `/home/${adminUsername}/.ssh/authorized_keys`,
-//                                 keyData: sshPublicKey,
-//                             }],
-//                         },
-//                     },
-//                 },
-//                 networkProfile: {
-//                     networkInterfaces: [{
-//                         id: nic.id,
-//                         primary: true,
-//                     }],
-//                 },
-//                 storageProfile: {
-//                     imageReference: {
-//                         publisher: "Canonical",
-//                         offer: "UbuntuServer",
-//                         sku: "18.04-LTS",
-//                         version: "latest",
-//                     },
-//                     osDisk: {
-//                         name: `web-vm-osdisk-${i}`,
-//                         caching: "ReadWrite",
-//                         createOption: "FromImage",
-//                         managedDisk: {
-//                             storageAccountType: "Standard_LRS",
-//                         },
-//                     },
-//                 },
-//                 identity: {
-//                     type: "UserAssigned",
-//                     userAssignedIdentities: {
-//                         [securitySecrets.managedIdentityId.apply(id => id)]: {},
-//                     },
-//                 },
-//             });
-//         });
-//     });
+    // Create traction app instance in the first private subnet
+    const tractionInstance = createAppInstance({
+        name: "traction-test-instance",
+        vmSize: config.get("tractionVmSize") || "Standard_D2s_v3",
+        subnetId: baseInfra.privateSubnetIds.apply(ids => ids[0]),
+        nsgId: securitySecrets.appNsgId,
+        managedIdentityId: securitySecrets.managedIdentityId,
+        resourceGroupName: baseInfra.resourceGroupName,
+    }, { dependsOn: [baseInfra.natGateway] });
 
-//     // Create network interfaces for app VMs
-//     const appNics = baseInfra.privateSubnetIds.apply(subnetIds => {
-//         return subnetIds.map((subnetId, i) => {
-//             return new network.NetworkInterface(`app-vm-nic-${i}`, {
-//                 resourceGroupName: baseInfra.resourceGroupName,
-//                 networkInterfaceName: `app-vm-nic-${i}`,
-//                 ipConfigurations: [{
-//                     name: "ipconfig",
-//                     subnet: {
-//                         id: subnetId,
-//                     },
-//                 }],
-//                 networkSecurityGroup: {
-//                     id: securitySecrets.appNsgId,
-//                 },
-//             });
-//         });
-//     });
+    // Create controller app instance in the second private subnet
+    const controllerInstance = createAppInstance({
+        name: "controller-test-instance",
+        vmSize: config.get("controllerVmSize") || "Standard_B2ms",
+        subnetId: baseInfra.privateSubnetIds.apply(ids => ids.length > 1 ? ids[1] : ids[0]),
+        nsgId: securitySecrets.appNsgId,
+        managedIdentityId: securitySecrets.managedIdentityId,
+        resourceGroupName: baseInfra.resourceGroupName,
+    }, { dependsOn: [baseInfra.natGateway] });
 
-//     // Create app VMs (application servers)
-//     const appVms = appNics.apply(nics => {
-//         return nics.map((nic, i) => {
-//             return new compute.VirtualMachine(`app-vm-${i}`, {
-//                 resourceGroupName: baseInfra.resourceGroupName,
-//                 vmName: `app-vm-${i}`,
-//                 location: nic.location,
-//                 hardwareProfile: {
-//                     vmSize: vmSize,
-//                 },
-//                 osProfile: {
-//                     computerName: `app-vm-${i}`,
-//                     adminUsername: adminUsername,
-//                     linuxConfiguration: {
-//                         disablePasswordAuthentication: true,
-//                         ssh: {
-//                             publicKeys: [{
-//                                 path: `/home/${adminUsername}/.ssh/authorized_keys`,
-//                                 keyData: sshPublicKey,
-//                             }],
-//                         },
-//                     },
-//                 },
-//                 networkProfile: {
-//                     networkInterfaces: [{
-//                         id: nic.id,
-//                         primary: true,
-//                     }],
-//                 },
-//                 storageProfile: {
-//                     imageReference: {
-//                         publisher: "Canonical",
-//                         offer: "UbuntuServer",
-//                         sku: "18.04-LTS",
-//                         version: "latest",
-//                     },
-//                     osDisk: {
-//                         name: `app-vm-osdisk-${i}`,
-//                         caching: "ReadWrite",
-//                         createOption: "FromImage",
-//                         managedDisk: {
-//                             storageAccountType: "Standard_LRS",
-//                         },
-//                     },
-//                 },
-//                 identity: {
-//                     type: "UserAssigned",
-//                     userAssignedIdentities: {
-//                         [securitySecrets.managedIdentityId.apply(id => id)]: {},
-//                     },
-//                 },
-//             });
-//         });
-//     });
+    // Create web instance (nginx equivalent) in the public subnet
+    const webInstance = createWebInstance({
+        name: "web-instance",
+        vmSize: config.get("webVmSize") || "Standard_B1s",
+        subnetId: baseInfra.publicSubnetIds.apply(ids => ids[0]),
+        nsgId: securitySecrets.webNsgId,
+        managedIdentityId: securitySecrets.managedIdentityId,
+        resourceGroupName: baseInfra.resourceGroupName,
+        publicIpId: publicIp.id,
+        tractionIp: tractionInstance.privateIp,
+        controllerIp: controllerInstance.privateIp,
+    }, { dependsOn: [tractionInstance.vm, controllerInstance.vm] });
 
-//     // Get public IPs once they are allocated
-//     const webVmPublicIps = webPublicIps.apply(ips => {
-//         return pulumi.all(ips.map(ip => ip.ipAddress));
-//     });
-
-//     return {
-//         webVmIds: webVms.apply(vms => pulumi.all(vms.map(vm => vm.id))),
-//         appVmIds: appVms.apply(vms => pulumi.all(vms.map(vm => vm.id))),
-//         webVmPublicIps: webVmPublicIps,
-//     };
-// }
+    return {
+        webPublicIp: publicIp.ipAddress,
+        tractionPrivateIp: tractionInstance.privateIp,
+        controllerPrivateIp: controllerInstance.privateIp,
+        publicIpAddress: publicIp.ipAddress,
+    };
+}

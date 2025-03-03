@@ -10,6 +10,7 @@ export interface BaseInfraOutputs {
     privateSubnetIds: pulumi.Output<string[]>;
     natGatewayIds: pulumi.Output<string[]>;
     publicIpIds: pulumi.Output<string[]>;
+    natGateway: network.NatGateway; 
 }
 
 function validateCidrs(vnetCidr: string, subnets: string[]): void {
@@ -103,5 +104,6 @@ export function createBaseInfra(): BaseInfraOutputs {
         privateSubnetIds: pulumi.output(privateSubnets.map(s => s.id)),
         natGatewayIds: pulumi.output([natGateway.id]),
         publicIpIds: pulumi.output([natPublicIp.id]),
+        natGateway,
     };
 }
