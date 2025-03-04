@@ -1136,7 +1136,7 @@ sudo cat /var/log/cloud-init-output.log
 # Check Nginx configuration
 sudo nginx -t       # Test configuration syntax
 sudo nginx -T       # Check entire configuration
-
+sudo cat /var/log/nginx-userdata.log  # Check startup logs
 # Check Let's Encrypt logs
 sudo cat /var/log/letsencrypt/letsencrypt.log
 

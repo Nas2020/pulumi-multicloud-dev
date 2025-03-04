@@ -38,7 +38,7 @@ The project is designed with a modular architecture that allows for cloud-specif
 <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; margin: 20px 0;">
   <div style="flex: 1; min-width: 300px; max-width: 450px; border: 1px solid #ddd; border-radius: 8px; padding: 20px; background-color: #f9f9f9;">
     <h3>
-      <img src="https://raw.githubusercontent.com/aws-amplify/amplify-cli/master/packages/amplify-cli/assets/aws-icon.png" alt="AWS" height="24" style="vertical-align: middle; margin-right: 10px;">
+      <img src="assets/aws-icon.png" alt="AWS" height="24" style="vertical-align: middle; margin-right: 10px;">
       Amazon Web Services (AWS)
     </h3>
     <p>Deploy infrastructure to AWS with VPC, EC2 instances, and more.</p>
@@ -46,7 +46,7 @@ The project is designed with a modular architecture that allows for cloud-specif
   </div>
   <div style="flex: 1; min-width: 300px; max-width: 450px; border: 1px solid #ddd; border-radius: 8px; padding: 20px; background-color: #f9f9f9;">
     <h3>
-      <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/azure.png" alt="Azure" height="24" style="vertical-align: middle; margin-right: 10px;">
+      <img src="assets/azure-logo.png" alt="Azure" height="24" style="vertical-align: middle; margin-right: 10px;">
       Microsoft Azure
     </h3>
     <p>Deploy infrastructure to Azure with VNet, VMs, and more.</p>
