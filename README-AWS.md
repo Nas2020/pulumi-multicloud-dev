@@ -568,6 +568,9 @@ pulumi-multicloud/
   <a href="https://pulumi.com" target="_blank" rel="noopener noreferrer">
     <img src="/assets/logo-pulumi.png" alt="Pulumi Logo" height="100" />
   </a>
+    <a href="https://aws.amazon.com/" target="_blank" rel="noopener noreferrer">
+    <img src="/assets/aws-logo.png" alt="AWS Logo" height="100" />
+  </a>
   <br><br>
   <p>
     <a href="#project-overview"><strong>Overview</strong></a> •
