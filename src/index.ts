@@ -21,13 +21,15 @@ if (cloudProvider === "aws") {
     const ec2InstancesOutputs = createEc2Instances(baseInfraOutputs, securitySecretsOutputs);
 
     infrastructureOutputs = {
-        ...baseInfraOutputs,
-        ...securitySecretsOutputs,
-        ...ec2InstancesOutputs,
-        privateRouteTableIds: baseInfraOutputs.privateRouteTableIds,
-        natGatewayIds: baseInfraOutputs.natGatewayIds,
-        nginxSecurityGroupId: securitySecretsOutputs.nginxSecurityGroupId,
-        appSecurityGroupId: securitySecretsOutputs.appSecurityGroupId,
+        // ...baseInfraOutputs,
+        // ...securitySecretsOutputs,
+        // ...ec2InstancesOutputs,
+        // privateRouteTableIds: baseInfraOutputs.privateRouteTableIds,
+        // natGatewayIds: baseInfraOutputs.natGatewayIds,
+        // nginxSecurityGroupId: securitySecretsOutputs.nginxSecurityGroupId,
+        // appSecurityGroupId: securitySecretsOutputs.appSecurityGroupId,
+        statisPublicIP: ec2InstancesOutputs.nginxPublicIp,
+        tractionAppSecretManager: ec2InstancesOutputs.tractionSecretArn,
         cloudProvider
     };
 } else if (cloudProvider === "azure") {
