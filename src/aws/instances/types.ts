@@ -15,9 +15,5 @@ export interface NginxConfig extends InstanceConfig {
     controllerIp: pulumi.Output<string>;
     elasticIpId: pulumi.Output<string>;
     elasticIp: pulumi.Output<string>;
-    dependsOn?: aws.ec2.Instance[]; // Already correct
+    dependsOn?: aws.ec2.Instance[];
 }
-
-// Update function signatures (though typically in the respective files, noted here for clarity)
-export function createAppInstance(config: InstanceConfig, opts?: pulumi.ComponentResourceOptions): aws.ec2.Instance;
-export function createNginxInstance(config: NginxConfig, opts?: pulumi.ComponentResourceOptions): aws.ec2.Instance;
