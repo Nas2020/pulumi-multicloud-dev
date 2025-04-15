@@ -1,12 +1,12 @@
 // /src/aws/instances/traction.ts
 import * as aws from "@pulumi/aws";
 import * as pulumi from "@pulumi/pulumi";
-import { InstanceConfig } from "./types";
+import { InstanceConfig } from "../types";
 import { 
     generateBaseSetupScript, 
     generateTractionAppSetupScript, 
     generateFinalizationScript 
-} from "../user-data-scripts";
+} from "./user-data-scripts";
 
 export function createTractionInstance(
     config: InstanceConfig,

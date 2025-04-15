@@ -11,7 +11,7 @@ export function getNginxInitScript(
     timestamp: string
 ): pulumi.Output<string> {
     // Get the SSL setup script
-    const sslScript = getSslSetupScript(serverName, letsEncryptEmail);
+    const sslScript = getSslSetupScript(config, serverName, letsEncryptEmail);
     
     // Get the base Nginx configuration
     const baseConfig = getNginxBaseConfig(config, serverName);

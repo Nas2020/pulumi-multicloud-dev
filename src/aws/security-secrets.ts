@@ -5,7 +5,7 @@ import { BaseInfraOutputs } from "./base-infra";
 
 export interface SecuritySecretsOutputs {
     nginxSecurityGroupId: pulumi.Output<string>;
-    appSecurityGroupId: pulumi.Output<string>;
+    controllerSecurityGroupId: pulumi.Output<string>;
     tractionSecurityGroupId: pulumi.Output<string>;
     instanceProfileName: pulumi.Output<string>;
 }
@@ -46,6 +46,13 @@ export function createSecuritySecrets(baseInfra: BaseInfraOutputs): SecuritySecr
                 toPort: 8032,
                 cidrBlocks: ["0.0.0.0/0"],
                 description: "Tenant Proxy direct access (for frontend hardcoded port)"
+            },
+            {
+                protocol: "tcp",
+                fromPort: 3008,
+                toPort: 3008,
+                cidrBlocks: ["0.0.0.0/0"],
+                description: "Cape Fear Controller direct access"
             }            
         ],
         egress: [
@@ -61,7 +68,7 @@ export function createSecuritySecrets(baseInfra: BaseInfraOutputs): SecuritySecr
     });
 
     // Create VPC security group for application instances
-    const appSecurityGroup = new aws.ec2.SecurityGroup("app-sg", {
+    const controllerSecurityGroup = new aws.ec2.SecurityGroup("controller-sg", {
         vpcId: baseInfra.vpcId,
         description: "Security group for application instances",
         ingress: [
@@ -78,6 +85,13 @@ export function createSecuritySecrets(baseInfra: BaseInfraOutputs): SecuritySecr
                 toPort: 22,
                 securityGroups: [nginxSecurityGroup.id],
                 description: "Allow SSH from nginx"
+            },
+            {
+                protocol: "tcp",
+                fromPort: 3008,
+                toPort: 3008,
+                securityGroups: [nginxSecurityGroup.id],
+                description: "Allow HTTP from nginx"
             }
         ],
         egress: [
@@ -208,7 +222,7 @@ export function createSecuritySecrets(baseInfra: BaseInfraOutputs): SecuritySecr
 
     return {
         nginxSecurityGroupId: nginxSecurityGroup.id,
-        appSecurityGroupId: appSecurityGroup.id,
+        controllerSecurityGroupId: controllerSecurityGroup.id,
         tractionSecurityGroupId: tractionSecurityGroup.id,
         instanceProfileName: instanceProfile.name,
     };
