@@ -6,10 +6,10 @@ import * as identity from "@pulumi/azure-native/managedidentity";
 import { BaseInfraOutputs } from "./base-infra";
 
 export interface SecuritySecretsOutputs {
-    webNsgId: pulumi.Output<string>;
-    appNsgId: pulumi.Output<string>;
+    combinedNsgId: pulumi.Output<string>;
     keyVaultId: pulumi.Output<string>;
     keyVaultUri: pulumi.Output<string>;
+    keyVaultName: pulumi.Output<string>;
     managedIdentityId: pulumi.Output<string>;
     managedIdentityPrincipalId: pulumi.Output<string>;
 }
@@ -21,12 +21,17 @@ export function createSecuritySecrets(baseInfra: BaseInfraOutputs): SecuritySecr
     const tenantId = config.get("azureTenantId") || "";
     // Get the current client's IP address to allow it through the Key Vault firewall
     const currentIp = config.get("azureCurrentIpAddressForKeyVault") || "0.0.0.0/0";
-
-    // Create Network Security Group for web/nginx instances (public facing)
-    const webNsg = new network.NetworkSecurityGroup("web-nsg", {
+    const keyVaultName = config.get("keyVaultName") || "miami-dade-kv";
+    const environment = pulumi.getStack();
+    const resourceNamePrefix = config.get("resourceNamePrefix") || environment;
+    
+    // Create a consolidated Network Security Group for deployment
+    // This combines the rules that were previously in separate NSGs
+    const combinedNsg = new network.NetworkSecurityGroup(`${resourceNamePrefix}-nsg`, {
         resourceGroupName: baseInfra.resourceGroupName,
-        networkSecurityGroupName: "web-nsg",
+        networkSecurityGroupName: `${resourceNamePrefix}-nsg`,
         securityRules: [
+            // HTTP and HTTPS access
             {
                 name: "allow-http",
                 protocol: "Tcp",
@@ -49,6 +54,7 @@ export function createSecuritySecrets(baseInfra: BaseInfraOutputs): SecuritySecr
                 priority: 110,
                 direction: "Inbound",
             },
+            // SSH access
             {
                 name: "allow-ssh",
                 protocol: "Tcp",
@@ -60,6 +66,55 @@ export function createSecuritySecrets(baseInfra: BaseInfraOutputs): SecuritySecr
                 priority: 120,
                 direction: "Inbound",
             },
+            // Tenant UI
+            {
+                name: "allow-tenant-ui",
+                protocol: "Tcp",
+                sourcePortRange: "*",
+                destinationPortRange: "5101",
+                sourceAddressPrefix: "*",
+                destinationAddressPrefix: "*",
+                access: "Allow",
+                priority: 130,
+                direction: "Inbound",
+            },
+            // Traction Agent ports
+            {
+                name: "allow-traction-agent-ports",
+                protocol: "Tcp",
+                sourcePortRange: "*",
+                destinationPortRange: "8030-8031",
+                sourceAddressPrefix: "*",
+                destinationAddressPrefix: "*",
+                access: "Allow",
+                priority: 140,
+                direction: "Inbound",
+            },
+            // Tenant Proxy
+            {
+                name: "allow-tenant-proxy",
+                protocol: "Tcp",
+                sourcePortRange: "*",
+                destinationPortRange: "8032",
+                sourceAddressPrefix: "*",
+                destinationAddressPrefix: "*",
+                access: "Allow",
+                priority: 150,
+                direction: "Inbound",
+            },
+            // Controller
+            {
+                name: "allow-controller",
+                protocol: "Tcp",
+                sourcePortRange: "*",
+                destinationPortRange: "3000",
+                sourceAddressPrefix: "*",
+                destinationAddressPrefix: "*",
+                access: "Allow",
+                priority: 160,
+                direction: "Inbound",
+            },
+            // Allow all outbound traffic
             {
                 name: "allow-outbound-all",
                 protocol: "*",
@@ -72,59 +127,26 @@ export function createSecuritySecrets(baseInfra: BaseInfraOutputs): SecuritySecr
                 direction: "Outbound",
             },
         ],
+        tags: {
+            Environment: pulumi.getStack(),
+            Project: "Miami-Dade Traction",
+        },
     });
 
-    // Create Network Security Group for application instances (private)
-    const appNsg = new network.NetworkSecurityGroup("app-nsg", {
-        resourceGroupName: baseInfra.resourceGroupName,
-        networkSecurityGroupName: "app-nsg",
-        securityRules: [
-            {
-                name: "allow-http-from-web",
-                protocol: "Tcp",
-                sourcePortRange: "*",
-                destinationPortRange: "80",
-                sourceAddressPrefix: "*", // In practice you would limit this to the web subnet CIDR
-                destinationAddressPrefix: "*",
-                access: "Allow",
-                priority: 100,
-                direction: "Inbound",
-            },
-            {
-                name: "allow-ssh-from-web",
-                protocol: "Tcp",
-                sourcePortRange: "*",
-                destinationPortRange: "22",
-                sourceAddressPrefix: "*", // In practice you would limit this to the web subnet CIDR
-                destinationAddressPrefix: "*",
-                access: "Allow",
-                priority: 110,
-                direction: "Inbound",
-            },
-            {
-                name: "allow-outbound-all",
-                protocol: "*",
-                sourcePortRange: "*",
-                destinationPortRange: "*",
-                sourceAddressPrefix: "*",
-                destinationAddressPrefix: "*",
-                access: "Allow",
-                priority: 100,
-                direction: "Outbound",
-            },
-        ],
-    });
-
-    // Create a Managed Identity for VM instances (equivalent to IAM role in AWS)
+    // Create a Managed Identity for VM instances
     const managedIdentity = new identity.UserAssignedIdentity("vm-identity", {
         resourceGroupName: baseInfra.resourceGroupName,
-        resourceName: "vm-identity",
+        resourceName: `${resourceNamePrefix}-vm-identity`,
+        tags: {
+            Environment: environment,
+            Project: `${resourceNamePrefix} Traction`,
+        },
     });
 
-    // Create a Key Vault (equivalent to AWS Secrets Manager)
-    const keyVault = new keyvault.Vault("app-keyvault", {
+    // Create a combined Key Vault for all secrets
+    const keyVault = new keyvault.Vault(`${resourceNamePrefix}-secrets`, {
         resourceGroupName: baseInfra.resourceGroupName,
-        vaultName: pulumi.interpolate`app-keyvault-${pulumi.getStack()}`,
+        vaultName: pulumi.interpolate`${keyVaultName}`,
         properties: {
             enabledForDeployment: true,
             enabledForDiskEncryption: true,
@@ -145,18 +167,12 @@ export function createSecuritySecrets(baseInfra: BaseInfraOutputs): SecuritySecr
                 ],
                 virtualNetworkRules: [],
             },
-            accessPolicies: [
-            ],
+            accessPolicies: [],
         },
-    });
-
-    // Add a secret to the Key Vault (equivalent to the AWS secret)
-    const secret = new keyvault.Secret("test-secret", {
-        resourceGroupName: baseInfra.resourceGroupName,
-        vaultName: keyVault.name,
-        secretName: "TEST-KEY",
-        properties: {
-            value: "hello",
+        tags: {
+            Environment: environment,
+            Project: `${resourceNamePrefix} Traction`,
+            Service: "traction-combined"
         },
     });
 
@@ -169,7 +185,6 @@ export function createSecuritySecrets(baseInfra: BaseInfraOutputs): SecuritySecr
     });
 
     // Assign Key Vault role to the VM Managed Identity
-    // Key Vault Secrets User built-in role allows reading secrets
     new authorization.RoleAssignment("kv-secrets-user-role", {
         principalId: managedIdentity.principalId,
         principalType: "ServicePrincipal",
@@ -178,7 +193,6 @@ export function createSecuritySecrets(baseInfra: BaseInfraOutputs): SecuritySecr
     });
 
     // Grant necessary Key Vault roles to the Service Principal that Pulumi is using
-    // This needs to be the Object ID of the Service Principal you created earlier
     const pulumiSpObjectId = config.get("azurePulumiServicePrincipalObjectId") || "";
     if (pulumiSpObjectId) {
         // Assign Key Vault Administrator role to the Pulumi Service Principal
@@ -188,7 +202,7 @@ export function createSecuritySecrets(baseInfra: BaseInfraOutputs): SecuritySecr
             roleDefinitionId: `/subscriptions/${subscriptionId}/providers/Microsoft.Authorization/roleDefinitions/00482a5a-887f-4fb3-b363-3b7fe8e74483`, // Key Vault Administrator
             scope: keyVault.id,
         });
-        
+
         // Add Key Vault Secrets Officer role which specifically allows secret deletion
         new authorization.RoleAssignment("pulumi-kv-secrets-officer-role", {
             principalId: pulumiSpObjectId,
@@ -199,9 +213,9 @@ export function createSecuritySecrets(baseInfra: BaseInfraOutputs): SecuritySecr
     }
 
     return {
-        webNsgId: webNsg.id,
-        appNsgId: appNsg.id,
+        combinedNsgId: combinedNsg.id,
         keyVaultId: keyVault.id,
+        keyVaultName: keyVault.name,
         keyVaultUri: pulumi.output(keyVault.properties.vaultUri).apply(uri => uri || ""),
         managedIdentityId: managedIdentity.id,
         managedIdentityPrincipalId: managedIdentity.principalId,

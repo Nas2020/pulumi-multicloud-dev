@@ -7,6 +7,7 @@
     "devDependencies": {
         "@types/ip": "^1.1.3",
         "@types/node": "^18",
+        "ts-node": "^10.9.2",
         "typescript": "^5.0.0"
     },
     "dependencies": {
@@ -16,5 +17,8 @@
         "cidr-tools": "^11.0.3",
         "dotenv": "^16.4.7",
         "ip": "^2.0.1"
+    },
+    "scripts": {
+        "update-config": "ts-node azure-config-updater.ts"
     }
 }

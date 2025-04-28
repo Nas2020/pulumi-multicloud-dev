@@ -11,6 +11,7 @@ export interface BaseInfraOutputs {
     natGatewayIds: pulumi.Output<string[]>;
     publicIpIds: pulumi.Output<string[]>;
     natGateway: network.NatGateway; 
+    location: pulumi.Output<string>;
 }
 
 function validateCidrs(vnetCidr: string, subnets: string[]): void {
@@ -42,16 +43,21 @@ function validateCidrs(vnetCidr: string, subnets: string[]): void {
 export function createBaseInfra(): BaseInfraOutputs {
     const config = new pulumi.Config();
     const region = config.get("azureRegion") || "eastus"; 
-    const vnetCidr = config.get("azureVnetCidr") || "10.1.0.0/16";
-    const publicSubnetCidrs = config.getObject<string[]>("azurePublicSubnetCidrs") || ["10.1.1.0/24"];
-    const privateSubnetCidrs = config.getObject<string[]>("azurePrivateSubnetCidrs") || ["10.1.2.0/24"];
-    const resourceGroupName = config.get("resourceGroupName") || "dg-resource-group"; 
+    const vnetCidr = config.get("azureVnetCidr") || "10.2.0.0/16";
+    const publicSubnetCidrs = config.getObject<string[]>("azurePublicSubnetCidrs") || ["10.2.1.0/24"];
+    const privateSubnetCidrs = config.getObject<string[]>("azurePrivateSubnetCidrs") || ["10.2.2.0/24"];
+    const resourceGroupName = config.get("resourceGroupName") || "miami-dade-rg"; 
+    const resourceNamePrefix = config.get("resourceNamePrefix") || "miami-dade"; 
 
     validateCidrs(vnetCidr, [...publicSubnetCidrs, ...privateSubnetCidrs]);
 
     const resourceGroup = new resources.ResourceGroup("main-rg", {
         resourceGroupName,
         location: region,
+        tags: {
+            Environment: pulumi.getStack(),
+            Project: `CRMS-${resourceNamePrefix}`,
+        },
     });
 
     const vnet = new network.VirtualNetwork("main-vnet", {
@@ -59,7 +65,11 @@ export function createBaseInfra(): BaseInfraOutputs {
         location: region,
         addressSpace: { addressPrefixes: [vnetCidr] },
         enableDdosProtection: false,
-        virtualNetworkName: "main-vnet",
+        virtualNetworkName: `${resourceNamePrefix}-vnet`,
+        tags: {
+            Environment: pulumi.getStack(),
+            Project: `CRMS-${resourceNamePrefix}`,
+        },
     });
 
     // Create public subnets
@@ -77,6 +87,10 @@ export function createBaseInfra(): BaseInfraOutputs {
         publicIpAddressName: "nat-pip",
         publicIPAllocationMethod: network.IPAllocationMethod.Static,
         sku: { name: network.PublicIPAddressSkuName.Standard },
+        tags: {
+            Environment: pulumi.getStack(),
+            Project: `CRMS-${resourceNamePrefix}`,
+        },
     });
 
     // Create a single NAT Gateway with the public IP
@@ -86,6 +100,10 @@ export function createBaseInfra(): BaseInfraOutputs {
         natGatewayName: "nat-gw",
         sku: { name: "Standard" },
         publicIpAddresses: [{ id: natPublicIp.id }],
+        tags: {
+            Environment: pulumi.getStack(),
+            Project: `CRMS-${resourceNamePrefix}`,
+        },
     });
 
     // Create private subnets with NAT Gateway association
@@ -105,5 +123,6 @@ export function createBaseInfra(): BaseInfraOutputs {
         natGatewayIds: pulumi.output([natGateway.id]),
         publicIpIds: pulumi.output([natPublicIp.id]),
         natGateway,
+        location: resourceGroup.location,
     };
 }

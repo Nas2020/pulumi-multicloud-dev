@@ -1,5 +1,6 @@
 <!-- <div align="center">
   <h1>✨ Pulumi Multi-Cloud Infrastructure for Azure ✨</h1>
+  <p><a href="README-AWS.md">Looking for AWS deployment? Click here</a></p>
 </div>
 <div align="center">
   <a href="https://digicred.com" target="_blank" rel="noopener noreferrer">
@@ -29,7 +30,7 @@
 </div>
 <hr>
 
-This project uses **Pulumi** with **TypeScript** to deploy Infrastructure as Code (IaC) for Microsoft Azure. This README provides instructions to set up and run the project locally on macOS or Linux, deploy to Azure for development and production environments, and an overview of the architecture and file structure.
+This project uses **Pulumi** with **TypeScript** to deploy Infrastructure as Code (IaC) for Microsoft Azure. This README provides instructions to set up and run the project locally on macOS or Linux, deploy to Azure for development and production environments, and an overview of the architecture and file structure. This is part of a multi-cloud project that also supports [AWS deployments](README-AWS.md).
 
 ## Table of Contents
 - [Project Overview](#project-overview)
@@ -531,7 +532,7 @@ sudo cat /var/log/cloud-init-output.log
 # Check Nginx configuration
 sudo nginx -t       # Test configuration syntax
 sudo nginx -T       # Check entire configuration
-
+sudo cat /var/log/nginx-userdata.log  # Check startup logs
 # Check Let's Encrypt logs
 sudo cat /var/log/letsencrypt/letsencrypt.log
 
@@ -601,6 +602,57 @@ pulumi-multicloud/
   <br><br>
   <a href="#-pulumi-multi-cloud-infrastructure-for-azure-">Back to top ⬆️</a>
 </div> -->
+
+
+<div align="center">
+  <h1>✨ Pulumi Multi-Cloud Infrastructure for Azure ✨</h1>
+  <p><a href="README-AWS.md">Looking for AWS deployment? Click here</a></p>
+</div>
+<div align="center">
+  <a href="https://digicred.com" target="_blank" rel="noopener noreferrer">
+    <img src="/assets/digicred-logo.png" alt="DigiCred Logo" height="100" style="margin-right: 20px;" />
+  </a>
+  <a href="https://pulumi.com" target="_blank" rel="noopener noreferrer">
+    <img src="/assets/logo-pulumi.png" alt="Pulumi Logo" height="100" />
+  </a>
+  <a href="https://azure.microsoft.com" target="_blank" rel="noopener noreferrer">
+    <img src="/assets/azure-logo.png" alt="Azure Logo" height="100" />
+  </a>
+  <br><br>
+  <p>
+    <a href="#project-overview"><strong>Overview</strong></a> •
+    <a href="#architecture"><strong>Architecture</strong></a> •
+    <a href="#prerequisites"><strong>Prerequisites</strong></a> •
+    <a href="#setup-instructions"><strong>Setup</strong></a> •
+    <a href="#deployment"><strong>Deployment</strong></a> •
+    <a href="#troubleshooting"><strong>Troubleshooting</strong></a>
+  </p>
+  <p>
+    <img alt="License" src="https://img.shields.io/badge/License-Apache_2.0-blue.svg">
+    <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-4.9+-blue?logo=typescript">
+    <img alt="Pulumi" src="https://img.shields.io/badge/Pulumi-3.0+-blueviolet?logo=pulumi">
+    <img alt="Azure" src="https://img.shields.io/badge/Azure-Supported-blue?logo=microsoft-azure">
+  </p>
+</div>
+<hr>
+
+This project uses **Pulumi** with **TypeScript** to deploy Infrastructure as Code (IaC) for Microsoft Azure. This README provides instructions to set up and run the project locally on macOS or Linux, deploy to Azure for development and production environments, and an overview of the architecture and file structure. This is part of a multi-cloud project that also supports [AWS deployments](README-AWS.md).
+
+## Table of Contents
+- [Project Overview](#project-overview)
+- [Architecture](#architecture)
+- [Prerequisites](#prerequisites)
+- [Setup Instructions](#setup-instructions)
+- [Deployment](#deployment)
+- [Troubleshooting](#troubleshooting)
+- [Project Structure](#project-structure)
+- [License](#license)
+
+---
+
+## Project Overview
+
+This project leverages Pulumi and TypeScript to deploy a scalable Azure infrastructure designed with a Virtual Network, multiple subnets, NAT Gateway, and dedicated virtual machines for different application tiers. The infrastructure includes secure networking, key vault for secrets management, and managed identities for enhanced security.
 
 <div align="center">
   <h1>✨ Pulumi Multi-Cloud Infrastructure for Azure ✨</h1>
